@@ -113,7 +113,7 @@ module perf_monitor_top #(
             fifo_inp_valid = 1'b1;
         end
 
-        if (oup_valid_i && oup_ready_i && fifo_oup_valid) begin
+        if (oup_valid_i && fifo_oup_valid) begin
             fifo_oup_ready = 1'b1;
             fifo_rslt_inp_valid = 1'b1;
         end
