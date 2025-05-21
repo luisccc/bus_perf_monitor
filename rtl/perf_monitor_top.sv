@@ -51,6 +51,7 @@ module perf_monitor_top #(
 
     logic fifo_inp_valid, fifo_oup_valid, fifo_oup_ready;
     logic fifo_rslt_inp_valid, fifo_rslt_oup_valid, fifo_rslt_oup_ready;
+    logic wait_handshake_d, wait_handshake_q;
 
 
     perf_monitor_prog_if #(
@@ -109,13 +110,22 @@ module perf_monitor_top #(
         hw2reg.perf_data.data.de = 1'b0;
         hw2reg.perf_data.v.de = 1'b0;
 
+        wait_handshake_d = wait_handshake_q;
+
         if (inp_valid_i && inp_ready_i) begin
             fifo_inp_valid = 1'b1;
         end
 
         if (oup_valid_i && fifo_oup_valid) begin
-            fifo_oup_ready = 1'b1;
-            fifo_rslt_inp_valid = 1'b1;
+            if(!wait_handshake_q) begin
+                fifo_oup_ready = 1'b1;
+                fifo_rslt_inp_valid = 1'b1;
+            end
+
+            if(!oup_ready_i) begin
+                wait_handshake_d = 1'b1;
+            end else
+                wait_handshake_d = 1'b0;
         end
 
         if (fifo_rslt_oup_valid && !reg2hw.perf_data.v) begin
@@ -171,8 +181,10 @@ module perf_monitor_top #(
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni) begin
             counter <= 0;
+            wait_handshake_q <= '0;
         end else begin
             counter <= counter + 1;
+            wait_handshake_q <= wait_handshake_d;
         end
     end
 
